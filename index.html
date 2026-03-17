@@ -1,402 +1,174 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>악플지도 — 진짜 리뷰만 남긴다</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet"/>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
- 
-    :root {
-      --red: #FF4500;
-      --red-dim: rgba(255,69,0,0.15);
-      --red-border: rgba(255,69,0,0.25);
-      --bg: #0A0A0A;
-      --surface: #111111;
-      --white: #FFFFFF;
-      --muted: rgba(255,255,255,0.4);
-    }
- 
-    html { scroll-behavior: smooth; }
- 
-    body {
-      background: var(--bg);
-      color: var(--white);
-      font-family: 'Noto Sans KR', sans-serif;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
- 
-    /* ── NOISE OVERLAY ── */
-    body::before {
-      content: '';
-      position: fixed; inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
-      pointer-events: none; z-index: 0; opacity: 0.35;
-    }
- 
-    /* ── NAV ── */
-    nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      height: 60px;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 32px;
-      background: rgba(10,10,10,0.85);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--red-border);
-    }
-    .nav-brand {
-      font-size: 18px; font-weight: 900;
-      color: var(--white); letter-spacing: -0.3px;
-    }
-    .nav-brand span { color: var(--red); }
-    .nav-cta {
-      background: var(--red); color: #fff;
-      font-size: 12px; font-weight: 700;
-      padding: 8px 20px; border-radius: 100px;
-      letter-spacing: 1px; text-transform: uppercase;
-      border: none; cursor: pointer;
-      transition: opacity 0.2s;
-    }
-    .nav-cta:hover { opacity: 0.85; }
- 
-    /* ── HERO ── */
-    .hero {
-      position: relative;
-      min-height: 100vh;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      padding: 80px 24px 60px;
-      overflow: hidden;
-      z-index: 1;
-    }
- 
-    /* decorative glow circles */
-    .glow {
-      position: absolute; border-radius: 50%; pointer-events: none;
-      background: radial-gradient(circle, rgba(255,69,0,0.18), transparent 70%);
-    }
-    .glow-tl { width: 500px; height: 500px; top: -160px; left: -160px; }
-    .glow-br { width: 400px; height: 400px; bottom: -120px; right: -100px; }
- 
-    /* grid lines */
-    .grid-bg {
-      position: absolute; inset: 0; pointer-events: none;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-      background-size: 80px 80px;
-    }
- 
-    /* ── AD CARD ── */
-    .card-wrap {
-      position: relative; z-index: 2;
-      animation: floatUp 0.8s cubic-bezier(0.22,1,0.36,1) both;
-    }
-    @keyframes floatUp {
-      from { opacity: 0; transform: translateY(40px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
- 
-    .ad-card {
-      width: 540px;
-      height: 540px;
-      background: #0D0D0D;
-      border-radius: 16px;
-      position: relative;
-      overflow: hidden;
-      display: flex; flex-direction: column;
-      justify-content: center; align-items: center;
-      border: 1px solid rgba(255,69,0,0.12);
-      box-shadow: 0 0 60px rgba(255,69,0,0.12), 0 32px 80px rgba(0,0,0,0.6);
-    }
-    .ad-card .noise {
-      position: absolute; inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
-      opacity: 0.4; pointer-events: none;
-    }
-    .ad-card .grid-line {
-      position: absolute; background: rgba(255,255,255,0.04);
-    }
-    .rating-strip {
-      position: absolute; top: 0; left: 0; right: 0;
-      height: 60px;
-      background: linear-gradient(135deg, #1a0000, #0D0D0D);
-      border-bottom: 1px solid rgba(255,60,0,0.2);
-      display: flex; align-items: center;
-      padding: 0 28px; gap: 12px;
-    }
-    .stars { color: #FF4500; font-size: 18px; letter-spacing: 2px; }
-    .rating-num { color: #FF4500; font-size: 22px; font-weight: 900; }
-    .rating-label {
-      color: rgba(255,255,255,0.35); font-size: 11px; font-weight: 400;
-      margin-left: auto; letter-spacing: 1.5px; text-transform: uppercase;
-    }
-    .main-content {
-      display: flex; flex-direction: column;
-      align-items: center; gap: 0; z-index: 2; margin-top: 20px;
-    }
-    .demon-emoji {
-      font-size: 64px; line-height: 1; margin-bottom: 20px;
-      filter: drop-shadow(0 0 20px rgba(255,69,0,0.6));
-    }
-    .headline {
-      color: #fff; font-size: 34px; font-weight: 900;
-      text-align: center; line-height: 1.15;
-      letter-spacing: -1px; margin-bottom: 8px;
-    }
-    .headline .accent { color: #FF4500; }
-    .sub {
-      color: rgba(255,255,255,0.45); font-size: 14px; font-weight: 400;
-      text-align: center; letter-spacing: 0.3px; margin-bottom: 28px;
-    }
-    .stat-row { display: flex; gap: 16px; }
-    .stat-pill {
-      background: rgba(255,69,0,0.12);
-      border: 1px solid rgba(255,69,0,0.3);
-      border-radius: 100px; padding: 8px 20px;
-      color: #FF6633; font-size: 13px; font-weight: 700; letter-spacing: 0.5px;
-    }
-    .bottom-bar {
-      position: absolute; bottom: 0; left: 0; right: 0;
-      height: 58px;
-      background: rgba(255,69,0,0.08);
-      border-top: 1px solid rgba(255,69,0,0.2);
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 28px;
-    }
-    .brand { color: rgba(255,255,255,0.9); font-size: 16px; font-weight: 700; letter-spacing: 0.5px; }
-    .cta-pill {
-      background: #FF4500; color: #fff;
-      font-size: 12px; font-weight: 700;
-      padding: 8px 18px; border-radius: 100px;
-      letter-spacing: 1px; text-transform: uppercase;
-    }
-    .deco-circle {
-      position: absolute; border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,69,0,0.15), transparent 70%);
-      pointer-events: none;
-    }
- 
-    /* ── SUBTEXT BELOW CARD ── */
-    .hero-sub {
-      position: relative; z-index: 2;
-      margin-top: 36px;
-      text-align: center;
-      animation: floatUp 0.8s 0.2s cubic-bezier(0.22,1,0.36,1) both;
-    }
-    .hero-sub p {
-      color: var(--muted); font-size: 14px; letter-spacing: 0.3px; margin-bottom: 20px;
-    }
-    .btn-primary {
-      display: inline-block;
-      background: var(--red); color: #fff;
-      font-size: 15px; font-weight: 700;
-      padding: 14px 36px; border-radius: 100px;
-      letter-spacing: 0.5px; border: none; cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
-      box-shadow: 0 0 30px rgba(255,69,0,0.35);
-      text-decoration: none;
-    }
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 40px rgba(255,69,0,0.5);
-    }
- 
-    /* ── FORM SECTION ── */
-    #signup {
-      position: relative; z-index: 1;
-      padding: 80px 24px;
-      display: flex; flex-direction: column; align-items: center;
-    }
-    .section-label {
-      color: var(--red); font-size: 11px; font-weight: 700;
-      letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px;
-    }
-    .section-title {
-      font-size: 28px; font-weight: 900; text-align: center;
-      line-height: 1.25; letter-spacing: -0.5px; margin-bottom: 8px;
-    }
-    .section-desc {
-      color: var(--muted); font-size: 14px; text-align: center;
-      margin-bottom: 40px;
-    }
-    .signup-box {
-      width: 100%; max-width: 480px;
-      background: var(--surface);
-      border: 1px solid var(--red-border);
-      border-radius: 16px;
-      padding: 32px 28px;
-      box-shadow: 0 0 40px rgba(255,69,0,0.08);
-    }
-    .form-group { margin-bottom: 16px; }
-    .form-group label {
-      display: block; font-size: 12px; font-weight: 700;
-      color: var(--muted); letter-spacing: 1px; text-transform: uppercase;
-      margin-bottom: 6px;
-    }
-    .form-group input {
-      width: 100%;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 8px; padding: 12px 16px;
-      color: var(--white); font-size: 15px;
-      font-family: 'Noto Sans KR', sans-serif;
-      outline: none; transition: border-color 0.2s;
-    }
-    .form-group input:focus { border-color: var(--red); }
-    .form-group input::placeholder { color: rgba(255,255,255,0.2); }
-    .btn-submit {
-      width: 100%; margin-top: 8px;
-      background: var(--red); color: #fff;
-      font-size: 15px; font-weight: 700;
-      padding: 14px; border-radius: 10px;
-      border: none; cursor: pointer; letter-spacing: 0.5px;
-      font-family: 'Noto Sans KR', sans-serif;
-      transition: opacity 0.2s, transform 0.2s;
-      box-shadow: 0 0 24px rgba(255,69,0,0.3);
-    }
-    .btn-submit:hover { opacity: 0.88; transform: translateY(-1px); }
-    .form-note {
-      text-align: center; color: var(--muted);
-      font-size: 12px; margin-top: 12px;
-    }
- 
-    /* ── FOOTER ── */
-    footer {
-      position: relative; z-index: 1;
-      border-top: 1px solid rgba(255,255,255,0.06);
-      padding: 28px 32px;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    footer .f-brand { font-size: 15px; font-weight: 700; }
-    footer .f-brand span { color: var(--red); }
-    footer .f-copy { color: var(--muted); font-size: 12px; }
- 
-    /* ── SUCCESS STATE ── */
-    .success-msg {
-      display: none; text-align: center; padding: 16px 0;
-    }
-    .success-msg .big { font-size: 40px; margin-bottom: 8px; }
-    .success-msg p { color: var(--muted); font-size: 14px; }
-    .success-msg strong { color: var(--white); }
- 
-    /* ── RESPONSIVE ── */
-    @media (max-width: 600px) {
-      .ad-card { width: 90vw; height: 90vw; }
-      .headline { font-size: 24px; }
-      .demon-emoji { font-size: 48px; }
-      .stat-row { gap: 8px; }
-      .stat-pill { font-size: 11px; padding: 7px 14px; }
-      nav { padding: 0 20px; }
-      footer { flex-direction: column; gap: 8px; text-align: center; }
-    }
-  </style>
-</head>
-<body>
- 
-  <!-- NAV -->
-  <nav>
-    <div class="nav-brand">😈 <span>악플</span>지도</div>
-    <button class="nav-cta" onclick="document.getElementById('signup').scrollIntoView({behavior:'smooth'})">무료 사전신청</button>
-  </nav>
- 
-  <!-- HERO -->
-  <section class="hero">
-    <div class="glow glow-tl"></div>
-    <div class="glow glow-br"></div>
-    <div class="grid-bg"></div>
- 
-    <div class="card-wrap">
-      <div class="ad-card">
-        <div class="noise"></div>
-        <div class="deco-circle" style="width:400px;height:400px;top:-100px;right:-100px;"></div>
-        <div class="deco-circle" style="width:300px;height:300px;bottom:-80px;left:-80px;"></div>
-        <div class="grid-line" style="left:180px;top:0;width:1px;height:100%;"></div>
-        <div class="grid-line" style="left:360px;top:0;width:1px;height:100%;"></div>
-        <div class="grid-line" style="top:180px;left:0;width:100%;height:1px;"></div>
-        <div class="grid-line" style="top:360px;left:0;width:100%;height:1px;"></div>
- 
-        <div class="rating-strip">
-          <span class="stars">★★★★★</span>
-          <span class="rating-num">4.9</span>
-          <span class="rating-label">광고 리뷰 탐지율</span>
-          <span style="color:#FF4500;font-size:22px;font-weight:900;margin-left:8px;">92%</span>
-        </div>
- 
-        <div class="main-content">
-          <div class="demon-emoji">😈</div>
-          <div class="headline">별점 4.9인데<br>막상 가면 <span class="accent">실망</span>한 적<br>있으신가요?</div>
-          <div class="sub">광고 리뷰를 걷어내고 진짜 불만만 보여드립니다</div>
-          <div class="stat-row">
-            <div class="stat-pill">😤 응대 72%</div>
-            <div class="stat-pill">⏳ 대기 54%</div>
-            <div class="stat-pill">👻 광고 92%</div>
-          </div>
-        </div>
- 
-        <div class="bottom-bar">
-          <span class="brand">😈 악플지도</span>
-          <span class="cta-pill">무료 사전신청</span>
-        </div>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
+  .card2 {
+    width: 540px;
+    height: 540px;
+    background: #0D0D0D;
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    font-family: 'Noto Sans KR', sans-serif;
+    margin: 16px auto 0;
+  }
+  .top-tag {
+    position: absolute;
+    top: 28px; left: 28px;
+    background: rgba(255,69,0,0.15);
+    border: 1px solid rgba(255,69,0,0.4);
+    color: #FF6633;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 14px;
+    border-radius: 100px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .logo2 {
+    position: absolute;
+    top: 24px; right: 28px;
+    color: rgba(255,255,255,0.7);
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .center-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    text-align: center;
+  }
+  .big-quote {
+    color: rgba(255,69,0,0.15);
+    font-size: 160px;
+    font-weight: 900;
+    line-height: 0.8;
+    position: absolute;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    text-align: center;
+    font-family: Georgia, serif;
+    pointer-events: none;
+  }
+  .review-bubbles {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .bubble {
+    border-radius: 12px;
+    padding: 12px 18px;
+    font-size: 13px;
+    text-align: left;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    position: relative;
+  }
+  .bubble.fake {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.3);
+    text-decoration: line-through;
+  }
+  .bubble.real {
+    background: rgba(255,69,0,0.1);
+    border: 1px solid rgba(255,69,0,0.35);
+    color: rgba(255,255,255,0.9);
+  }
+  .bubble-icon { font-size: 16px; flex-shrink: 0; }
+  .bubble-text { font-weight: 400; line-height: 1.4; }
+  .badge-fake {
+    margin-left: auto;
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.25);
+    font-size: 9px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 100px;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+  }
+  .badge-real {
+    margin-left: auto;
+    background: rgba(255,69,0,0.2);
+    color: #FF6633;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 100px;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+  }
+  .bottom-cta2 {
+    position: absolute;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+  }
+  .cta-text2 {
+    color: #FF4500;
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    margin-bottom: 12px;
+  }
+  .cta-btn2 {
+    background: #FF4500;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 11px 32px;
+    border-radius: 100px;
+    letter-spacing: 0.5px;
+    display: inline-block;
+    white-space: nowrap;
+  }
+  .deco2 {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+</style>
+<div class="card2">
+  <div class="deco2" style="width:350px;height:350px;top:-100px;left:-80px;background:radial-gradient(circle,rgba(255,69,0,0.08),transparent 70%);"></div>
+  <div class="big-quote">"</div>
+
+  <div class="top-tag">진짜 불만 필터</div>
+  <div class="logo2">😈 악플지도</div>
+
+  <div class="center-content" style="top:44%;transform:translate(-50%,-45%);">
+    <div class="review-bubbles">
+      <div class="bubble fake">
+        <span class="bubble-icon">⭐</span>
+        <span class="bubble-text">완전 강추!! 인생 맛집 여기서 평생 살래요~</span>
+        <span class="badge-fake">광고 의심</span>
+      </div>
+      <div class="bubble fake">
+        <span class="bubble-icon">⭐</span>
+        <span class="bubble-text">사장님 너무 친절하고 분위기 최고예요 💕</span>
+        <span class="badge-fake">광고 의심</span>
+      </div>
+      <div class="bubble real">
+        <span class="bubble-icon">😤</span>
+        <span class="bubble-text">대기 40분인데 안내 하나도 없었어요. 다신 안 가요.</span>
+        <span class="badge-real">진짜 후기</span>
+      </div>
+      <div class="bubble fake">
+        <span class="bubble-icon">⭐</span>
+        <span class="bubble-text">여기 진짜 최고임 ㅎㅎ 또 올게요!!</span>
+        <span class="badge-fake">광고 의심</span>
       </div>
     </div>
- 
-    <div class="hero-sub">
-      <p>광고성 리뷰를 걷어내고, 진짜 불만을 보여주는 서비스</p>
-      <a class="btn-primary" onclick="document.getElementById('signup').scrollIntoView({behavior:'smooth'})">
-        지금 무료 사전신청 →
-      </a>
-    </div>
-  </section>
- 
-  <!-- SIGNUP -->
-  <section id="signup">
-    <div class="section-label">Early Access</div>
-    <h2 class="section-title">오픈 전에 먼저 써보세요</h2>
-    <p class="section-desc">사전신청자에게 베타 출시 즉시 알림을 드립니다</p>
- 
-    <div class="signup-box">
-      <div id="form-area">
-        <div class="form-group">
-          <label>이름</label>
-          <input type="text" id="input-name" placeholder="홍길동" />
-        </div>
-        <div class="form-group">
-          <label>이메일</label>
-          <input type="email" id="input-email" placeholder="hello@example.com" />
-        </div>
-        <button class="btn-submit" onclick="handleSubmit()">무료 사전신청하기</button>
-        <p class="form-note">스팸 없음 · 언제든 취소 가능</p>
-      </div>
-      <div class="success-msg" id="success-msg">
-        <div class="big">🎉</div>
-        <p><strong id="thank-name">신청</strong>이 완료됐어요!<br>베타 오픈 시 가장 먼저 알려드릴게요.</p>
-      </div>
-    </div>
-  </section>
- 
-  <!-- FOOTER -->
-  <footer>
-    <div class="f-brand">😈 <span>악플</span>지도</div>
-    <div class="f-copy">© 2025 악플지도 · 진짜 리뷰만 남긴다</div>
-  </footer>
- 
-  <script>
-    function handleSubmit() {
-      const name = document.getElementById('input-name').value.trim();
-      const email = document.getElementById('input-email').value.trim();
-      if (!name) { alert('이름을 입력해주세요.'); return; }
-      if (!email || !email.includes('@')) { alert('올바른 이메일을 입력해주세요.'); return; }
- 
-      document.getElementById('form-area').style.display = 'none';
-      const msg = document.getElementById('success-msg');
-      msg.style.display = 'block';
-      document.getElementById('thank-name').textContent = name + '님의 신청';
-    }
-  </script>
-</body>
-</html>
- 
+  </div>
+
+  <div class="bottom-cta2">
+    <div class="cta-text2">진짜 리뷰, 이제 한눈에</div>
+    <div class="cta-btn2">무료 사전 신청하기 →</div>
+  </div>
+</div>
